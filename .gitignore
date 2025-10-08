@@ -1,0 +1,115 @@
+# ============================================================
+# 🧠 DEVASSIST / SPRING BOOT + JAVA + GRADLE + INTELLIJ
+# ============================================================
+
+# === Build & Gradle ===
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# === Spring Boot build outputs ===
+target/
+bin/
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# === IntelliJ IDEA ===
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# === Eclipse / STS ===
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans/
+.sts4-cache/
+
+# === VS Code ===
+.vscode/
+
+# === NetBeans ===
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# === Logs & Temp files ===
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+*.swo
+*.old
+*~
+
+# === macOS system files ===
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# === Linux system files ===
+*~
+
+# === Java ===
+*.class
+*.jar
+*.war
+*.ear
+
+# === Env / Secrets ===
+.env
+.env.*
+*.env
+*.key
+*.secret
+*.pem
+*.p12
+*.crt
+
+# Prevent committing local application configuration
+application-local.properties
+application-local.yml
+
+# === Docker / Compose (optional) ===
+docker-compose.override.yml
+*.local.yml
+
+# === Gradle local config ===
+gradle-app.setting
+.gradle/
+build/
+.gradle-cache/
+
+# === Test Reports / Coverage ===
+test-output/
+coverage/
+*.exec
+*.ec
+jacoco.exec
+surefire-reports/
+
+# === Temporary or backup files ===
+*.bak
+*.tmp
+*~
+*.swp
+
+# === OS-specific ===
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# === JetBrains run configs (may contain secrets) ===
+.idea/runConfigurations/
