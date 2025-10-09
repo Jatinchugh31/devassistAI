@@ -1,31 +1,48 @@
 package com.devassist.controller;
 
-import org.springframework.ai.openai.OpenAiChatModel;
+import com.devassist.constant.RoleType;
+import com.devassist.model.AiResponse;
+import com.devassist.service.PromptBuilderService;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/ai")
+@Log4j2
 public class ChatController {
 
-    private final OpenAiChatModel chatModel;
+    @Autowired
+    private ChatClient chatClient;
 
     @Autowired
-    public ChatController(OpenAiChatModel chatModel) {
-        this.chatModel = chatModel;
-    }
+    private PromptBuilderService promptBuilderService;
 
-    @GetMapping("/generate")
-    public Map<String, String> generate(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        // Simple sync call - the Spring AI model will handle request/response
-        String response = this.chatModel.call(message);
-        return Map.of("generation", response);
+    @GetMapping("/chat")
+    public ResponseEntity<?> chat(
+            @RequestParam String message,
+            @RequestParam(required = false, defaultValue = "GENERAL") RoleType role, @RequestParam(required = false,defaultValue = "false") boolean rawResponse) {
+
+        Prompt prompt = promptBuilderService.buildPrompt(role, message);
+        log.info("Prompt {}", prompt);
+        if(rawResponse) {
+            return ResponseEntity.ok(chatClient.prompt()
+                    .messages(prompt.getInstructions())
+                    .call().content());
+        }else {
+            return ResponseEntity.ok(chatClient.prompt()
+                    .messages(prompt.getInstructions())
+                    .call()
+                    .entity(AiResponse.class));
+        }
+
     }
 
     @GetMapping("/debug/env")
@@ -40,13 +57,13 @@ public class ChatController {
         out.put("SPRING_AI_OPENAI_API_KEY_present", springOpenai != null && springOpenai.startsWith("sk-"));
         out.put("springProperty_set", springProp != null && !springProp.isBlank());
 
-        // Masked previews (safe)
-        out.put("OPENAI_API_KEY_preview", openai != null ? mask(openai) : null);
-        out.put("SPRING_AI_OPENAI_API_KEY_preview", springOpenai != null ? mask(springOpenai) : null);
-        out.put("springProperty_preview", springProp != null ? mask(springProp) : null);
+        out.put("OPENAI_API_KEY_preview", mask(openai));
+        out.put("SPRING_AI_OPENAI_API_KEY_preview", mask(springOpenai));
+        out.put("springProperty_preview", mask(springProp));
 
         return out;
     }
+
     private String mask(String s) {
         if (s == null) return null;
         int len = s.length();
