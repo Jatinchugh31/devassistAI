@@ -16,17 +16,33 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url "https://repo.spring.io/milestone" }
-    maven { url "https://repo.spring.io/snapshot" }
+    // optional milestone/snapshot repos only if you need M/S builds
+    // maven { url 'https://repo.spring.io/milestone' }
+    // maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
+    // Use the Spring AI BOM to manage versions
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.3") // stable release
+
+    // Use the OpenAI starter which transitively provides the ChatClient and model auto-config
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+    // OR (alternative): bring in the chat client module directly
+    // implementation 'org.springframework.ai:spring-ai-client-chat'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter:1.0.0-M6'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // optional: redis if you plan to use ChatMemory repository backed by Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // jackson time module
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

@@ -1,30 +1,21 @@
 package com.devassist.service;
 
 import com.devassist.constant.RoleType;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-import static com.devassist.constant.RoleType.JAVA;
 
 @Service
 public class PromptBuilderService {
 
-    public Prompt buildPrompt(RoleType role, String message) {
-        String systemInstruction = switch (role) {
-            case JAVA -> "You are a highly skilled Java backend engineer. Explain code, frameworks, and performance optimizations clearly.";
-            case SQL -> "You are a database expert. Help with SQL queries, optimization, and data modeling.";
-            case CLOUD -> "You are a Cloud Architect. Guide users about AWS, microservices, and scalability patterns.";
-            case DEVOPS -> "You are a DevOps engineer helping with CI/CD, Kubernetes, and infrastructure automation.";
-            default -> "You are DevAssist — a general AI assistant for developers.";
-        };
+    public String buildSystemInstruction(RoleType role) {
+        if (role == null) {
+            return "You are DevAssist, a helpful developer assistant.";
+        }
 
-        return new Prompt(List.of(
-                new SystemMessage(systemInstruction),
-                new UserMessage(message)
-        ));
+        return switch (role) {
+            case JAVA -> "You are JavaAgent: a senior Java backend engineer. Explain concisely, include code examples when helpful.";
+            case SQL -> "You are SqlAgent: an expert SQL performance engineer. Focus on safety and optimization. Use READ-ONLY SQL when executing.";
+            case CLOUD -> "You are CloudAgent: a cloud architect and DevOps engineer. Provide safe infrastructure advice.";
+            default -> "You are DevAssist, a helpful developer assistant.";
+        };
     }
 }
