@@ -45,6 +45,12 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+
+    // Spring JDBC (provides JdbcTemplate and DataSource auto-config)
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'com.h2database:h2:2.1.214'
+
 }
 
 tasks.named('test') {
