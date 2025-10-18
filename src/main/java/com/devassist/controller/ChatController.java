@@ -74,6 +74,10 @@ public class ChatController {
 
 
 
+    /**
+     * SQL Tool Endpoint
+     * AI can query database logs
+     */
     @PostMapping("/chat/sql")
     public ResponseEntity<?> chatSql(@RequestBody AgentRequest request) {
         String sessionId = request.getSessionId();
@@ -82,11 +86,68 @@ public class ChatController {
             log.debug("Generated ephemeral sessionId={}", sessionId);
         }
 
+        String aiResponse = chatService.sendSqlToolMessage(sessionId, request);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Conversation-Id", sessionId);
 
-          String aiResponse = chatService.sendSqlToolMessage(sessionId, request);
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("X-Conversation-Id", sessionId);
+        return ResponseEntity.ok().headers(headers).body(aiResponse);
+    }
 
-            return ResponseEntity.ok().headers(headers).body(aiResponse);
+    /**
+     * FileSystem Tool Endpoint
+     * AI can read files, list directories, get file info
+     */
+    @PostMapping("/chat/filesystem")
+    public ResponseEntity<?> chatFileSystem(@RequestBody AgentRequest request) {
+        String sessionId = request.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = "anon-" + UUID.randomUUID();
+            log.debug("Generated ephemeral sessionId={}", sessionId);
+        }
+
+        String aiResponse = chatService.sendFileSystemToolMessage(sessionId, request);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Conversation-Id", sessionId);
+
+        return ResponseEntity.ok().headers(headers).body(aiResponse);
+    }
+
+    /**
+     * HTTP Tool Endpoint
+     * AI can make external API calls
+     */
+    @PostMapping("/chat/http")
+    public ResponseEntity<?> chatHttp(@RequestBody AgentRequest request) {
+        String sessionId = request.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = "anon-" + UUID.randomUUID();
+            log.debug("Generated ephemeral sessionId={}", sessionId);
+        }
+
+        String aiResponse = chatService.sendHttpToolMessage(sessionId, request);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Conversation-Id", sessionId);
+
+        return ResponseEntity.ok().headers(headers).body(aiResponse);
+    }
+
+    /**
+     * Multi-Tool Endpoint (ALL TOOLS)
+     * AI can use SQL, FileSystem, and HTTP tools together
+     * Demonstrates TOOL ORCHESTRATION and CHAINING
+     */
+    @PostMapping("/chat/multi-tool")
+    public ResponseEntity<?> chatMultiTool(@RequestBody AgentRequest request) {
+        String sessionId = request.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = "anon-" + UUID.randomUUID();
+            log.debug("Generated ephemeral sessionId={}", sessionId);
+        }
+
+        String aiResponse = chatService.sendMultiToolMessage(sessionId, request);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Conversation-Id", sessionId);
+
+        return ResponseEntity.ok().headers(headers).body(aiResponse);
     }
 }

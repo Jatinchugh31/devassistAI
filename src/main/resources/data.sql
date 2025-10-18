@@ -93,3 +93,125 @@ VALUES (
            '{"orderId":"ORD-99876","amount":"79.99","currency":"USD"}',
            'billing,info'
        );
+
+-- ERROR: SQL Tool - Invalid query
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:15:45', 'ERROR', 'devassist', 'localhost', 'http-nio-9090-exec-5', 'req-2001', 'developer',
+           'com.devassist.tools.SqlTool', 'java.sql.SQLException',
+           'SQL execution failed: Invalid column name in query',
+           'java.sql.SQLException: Column "invalid_column" not found'
+               || CHAR(10) || '\tat com.devassist.tools.SqlTool.executeSql(SqlTool.java:65)'
+               || CHAR(10) || '\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)',
+           '{"query":"SELECT invalid_column FROM app_logs","maxRows":50}',
+           'sql,error'
+       );
+
+-- ERROR: FileSystem Tool - File not found
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:20:12', 'ERROR', 'devassist', 'localhost', 'http-nio-9090-exec-7', 'req-2002', 'developer',
+           'com.devassist.tools.FileSystemTool', 'java.io.IOException',
+           'Error reading file: File does not exist',
+           'java.io.IOException: File not found: /invalid/path/file.txt'
+               || CHAR(10) || '\tat com.devassist.tools.FileSystemTool.readFile(FileSystemTool.java:78)'
+               || CHAR(10) || '\tat com.devassist.tools.FileSystemTool.validateAndResolvePath(FileSystemTool.java:310)',
+           '{"filePath":"/invalid/path/file.txt","operation":"read"}',
+           'filesystem,error'
+       );
+
+-- WARN: High memory usage in DevAssist
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:25:33', 'WARN', 'devassist', 'localhost', 'memory-monitor', 'req-2003', NULL,
+           'com.devassist.monitor.MemoryMonitor', NULL,
+           'High memory usage detected: 82% of heap used',
+           NULL,
+           '{"heapUsedMB":1640,"heapMaxMB":2000,"gcCount":45}',
+           'performance,memory'
+       );
+
+-- ERROR: HTTP Tool - Connection timeout
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:30:55', 'ERROR', 'devassist', 'localhost', 'http-nio-9090-exec-9', 'req-2004', 'developer',
+           'com.devassist.tools.HttpTool', 'java.net.SocketTimeoutException',
+           'HTTP GET request failed: Connection timeout',
+           'java.net.SocketTimeoutException: Read timed out'
+               || CHAR(10) || '\tat java.base/java.net.SocketInputStream.socketRead0(Native Method)'
+               || CHAR(10) || '\tat com.devassist.tools.HttpTool.httpGet(HttpTool.java:92)',
+           '{"url":"https://api.example.com/data","timeoutMs":10000}',
+           'http,timeout'
+       );
+
+-- ERROR: AI Model - Rate limit exceeded
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:35:20', 'ERROR', 'devassist', 'localhost', 'http-nio-9090-exec-11', 'req-2005', 'developer',
+           'com.devassist.service.ChatService', 'org.springframework.ai.retry.NonTransientAiException',
+           'AI request failed: Rate limit exceeded',
+           'org.springframework.ai.retry.NonTransientAiException: HTTP 429 - Rate limit exceeded'
+               || CHAR(10) || '\tat com.devassist.service.ChatService.sendMessage(ChatService.java:45)'
+               || CHAR(10) || '\tat com.devassist.controller.ChatController.chat(ChatController.java:52)',
+           '{"model":"gpt-4o-mini","tokensUsed":1500,"requestsPerMinute":60}',
+           'ai,ratelimit'
+       );
+
+-- INFO: Successful multi-tool execution
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:40:15', 'INFO', 'devassist', 'localhost', 'http-nio-9090-exec-13', 'req-2006', 'developer',
+           'com.devassist.service.ChatService', NULL,
+           'Multi-tool request completed successfully: sql_execute + read_file',
+           NULL,
+           '{"tools":["sql_execute","read_file"],"duration":2345,"tokensUsed":450}',
+           'multi-tool,success'
+       );
+
+-- ERROR: Redis connection failed
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:45:30', 'ERROR', 'devassist', 'localhost', 'lettuce-nioEventLoop-4-1', 'req-2007', NULL,
+           'com.devassist.repository.RedisChatMemoryRepository', 'io.lettuce.core.RedisConnectionException',
+           'Failed to connect to Redis: Connection refused',
+           'io.lettuce.core.RedisConnectionException: Unable to connect to localhost:6379'
+               || CHAR(10) || '\tat io.lettuce.core.RedisConnectionException.create(RedisConnectionException.java:78)'
+               || CHAR(10) || '\tat com.devassist.repository.RedisChatMemoryRepository.add(RedisChatMemoryRepository.java:34)',
+           '{"host":"localhost","port":6379,"timeout":2000}',
+           'redis,connection'
+       );
+
+-- WARN: Slow SQL query
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:50:45', 'WARN', 'devassist', 'localhost', 'http-nio-9090-exec-15', 'req-2008', 'developer',
+           'com.devassist.tools.SqlTool', NULL,
+           'SQL query took longer than expected: 3456ms',
+           NULL,
+           '{"query":"SELECT * FROM app_logs WHERE level = ''ERROR''","executionTimeMs":3456,"rowsReturned":25}',
+           'sql,performance'
+       );
+
+-- ERROR: File upload size exceeded
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 10:55:10', 'ERROR', 'devassist', 'localhost', 'http-nio-9090-exec-17', 'req-2009', 'developer',
+           'com.devassist.service.FileUploadService', 'java.lang.IllegalArgumentException',
+           'File upload rejected: File too large',
+           'java.lang.IllegalArgumentException: File too large: 15728640 bytes (max: 10485760 bytes)'
+               || CHAR(10) || '\tat com.devassist.service.FileUploadService.validateFile(FileUploadService.java:95)'
+               || CHAR(10) || '\tat com.devassist.controller.FileUploadController.uploadAndAnalyze(FileUploadController.java:45)',
+           '{"fileName":"large-log.txt","fileSize":15728640,"maxSize":10485760}',
+           'upload,validation'
+       );
+
+-- INFO: LogAdvisor tracking
+INSERT INTO app_logs (created_at, level, service, host, thread, request_id, user_id, logger, exception_type, message, stack_trace, context, tags)
+VALUES (
+           '2025-10-18 11:00:25', 'INFO', 'devassist', 'localhost', 'http-nio-9090-exec-19', 'req-2010', 'developer',
+           'com.devassist.advisor.LogAdvisor', NULL,
+           'AI request completed: duration=1234ms, tokens=350, cost=$0.0105',
+           NULL,
+           '{"duration":1234,"promptTokens":200,"completionTokens":150,"totalTokens":350,"cost":0.0105}',
+           'advisor,metrics'
+       );

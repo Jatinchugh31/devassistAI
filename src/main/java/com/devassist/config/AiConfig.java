@@ -1,5 +1,6 @@
 package com.devassist.config;
 
+import com.devassist.advisor.LogAdvisor;
 import com.devassist.model.RedisChatMemory;
 import com.devassist.repository.RedisChatMemoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,8 +19,6 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class AiConfig {
 
-
-
     @Bean
     public ChatMemory chatMemory(RedisChatMemoryRepository repo, ObjectMapper mapper) {
         // RedisChatMemory constructor: RedisChatMemory(RedisChatMemoryRepository repo, ObjectMapper mapper)
@@ -27,11 +26,15 @@ public class AiConfig {
     }
 
     @Bean
-    public ChatClient chatClient(ChatModel chatModel, ChatMemory chatMemory) {
-        // Build a ChatClient and attach the MessageChatMemoryAdvisor so that
-        // calls using .conversationId(...) will read/write conversation history.
+    public ChatClient chatClient(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor) {
+        // Build a ChatClient with multiple advisors:
+        // 1. LogAdvisor (order=0) - Logs all requests/responses
+        // 2. PromptChatMemoryAdvisor (order=10) - Manages conversation history
         return ChatClient.builder(chatModel)
-                .defaultAdvisors(PromptChatMemoryAdvisor.builder(chatMemory).build())
+                .defaultAdvisors(
+                    logAdvisor,  // Executes first (order=0)
+                    PromptChatMemoryAdvisor.builder(chatMemory).build()  // Executes second (order=10)
+                )
                 .build();
     }
 }
