@@ -38,7 +38,7 @@ public class LogAdvisor implements CallAdvisor {
 
     @Override
     public int getOrder() {
-        return 0; // Execute first (before all other advisors)
+        return 1; // Execute first (before all other advisors)
     }
 
 

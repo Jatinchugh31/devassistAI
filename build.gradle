@@ -51,6 +51,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'com.h2database:h2:2.1.214'
 
+    // RAG Dependencies (Official Spring AI approach)
+    implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
+    implementation 'org.springframework.ai:spring-ai-rag'
+    
+    // Redis Vector Store (Fast and scalable)
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-redis'
+
+    implementation("com.github.javaparser:javaparser-core:3.27.1")
+
 }
 
 tasks.named('test') {
