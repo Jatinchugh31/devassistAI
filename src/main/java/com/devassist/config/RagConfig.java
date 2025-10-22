@@ -1,6 +1,5 @@
-package com.devassist.rag.config;
+package com.devassist.config;
 
-import com.devassist.config.RagProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
@@ -66,6 +65,23 @@ public class RagConfig {
                 .indexName("devassist-index")
                 .prefix("devassist:embedding:")
                 .initializeSchema(true)
+                .metadataFields(
+                // textual fields: filePath might be more useful as TEXT (full text)
+                RedisVectorStore.MetadataField.text("filePath"),
+                // className, methodName and codeType are usually exact tokens; Tag is fine
+                RedisVectorStore.MetadataField.tag("className"),
+                RedisVectorStore.MetadataField.tag("methodName"),
+                RedisVectorStore.MetadataField.tag("codeType"),
+                // roles and tags are arrays in JSON — index the array elements as TAGs
+                RedisVectorStore.MetadataField.tag("roles"),   // must be stored as JSON array in docs
+                RedisVectorStore.MetadataField.tag("tags"),    // must be stored as JSON array in docs
+                // boolean flags: store 'true'/'false' as TAG values (easy to query)
+                RedisVectorStore.MetadataField.tag("isController"),
+                RedisVectorStore.MetadataField.tag("isService"),
+                RedisVectorStore.MetadataField.tag("isRepository"),
+                // optional: project metadata for multi-project setups
+                RedisVectorStore.MetadataField.tag("project")
+        )
                 .build();
     }
 

@@ -1,7 +1,6 @@
-package com.devassist.rag.service;
+package com.devassist.service;
 
 import com.devassist.model.CodeDocument;
-import com.devassist.service.DocumentLoaderService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -56,7 +55,7 @@ public class RagService {
             // Parallel conversion to Documents (safe because `documents` is synchronized)
             filteredDocs.parallelStream().forEach(codeDoc -> {
                 try {
-                    log.info("roles found" + codeDoc.getRoles() + codeDoc.getFilePath());
+                    log.info("Tags found" + codeDoc.getTags() + codeDoc.getFilePath());
                     Map<String, Object> meta = new HashMap<>();
                     meta.put("id", safeString(codeDoc.getId()));
                     meta.put("filePath", safeString(codeDoc.getFilePath()));
@@ -69,9 +68,9 @@ public class RagService {
                     meta.put("lineRange", safeString(codeDoc.getLineRange()));
                     meta.put("lang", safeString(codeDoc.getFileExtension()));
                     // tags (legacy)
-                    meta.put("tags", String.join(",", Optional.ofNullable(codeDoc.getTags()).orElse(Collections.emptyList())));
+                    meta.put("tags",  Optional.ofNullable(codeDoc.getTags()).orElse(Collections.emptyList()));
                     // roles (preferred)
-                    meta.put("roles", String.join(",", Optional.ofNullable(codeDoc.getRoles()).orElse(Collections.emptyList())));
+                    meta.put("roles", Optional.ofNullable(codeDoc.getRoles()).orElse(Collections.emptyList()));
                     // annotations if present
                     meta.put("annotations", String.join(",", Optional.ofNullable(codeDoc.getAnnotations()).orElse(Collections.emptyList())));
 

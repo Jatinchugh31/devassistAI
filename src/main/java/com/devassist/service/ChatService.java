@@ -1,7 +1,6 @@
 package com.devassist.service;
 
 import com.devassist.model.AgentRequest;
-import com.devassist.rag.service.LLMFilterAdvisorService;
 import com.devassist.repository.RedisChatMemoryRepository;
 import com.devassist.tools.FileSystemTool;
 import com.devassist.tools.HttpTool;
@@ -38,7 +37,7 @@ public class ChatService {
      * Main method for sending messages to AI with tools
      */
     public String sendMessage(String sessionId, AgentRequest request) {
-        String systemInstruction = promptBuilderService.buildSystemInstruction(request.getRole());
+        String systemInstruction = promptBuilderService.buildSystemInstruction(null);
         final String finalSessionId = sessionId;
         try {
             log.info("Starting chat request for conversationId={}, role={}", finalSessionId, request.getRole());

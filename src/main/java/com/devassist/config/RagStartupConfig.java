@@ -1,6 +1,6 @@
 package com.devassist.config;
 
-import com.devassist.rag.service.RagService;
+import com.devassist.service.RagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;

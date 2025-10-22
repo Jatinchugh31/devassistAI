@@ -1,6 +1,6 @@
 package com.devassist.advisor;
 
-import com.devassist.rag.service.LLMFilterAdvisorService;
+import com.devassist.service.LLMFilterAdvisorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClientRequest;

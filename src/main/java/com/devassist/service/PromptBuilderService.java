@@ -8,7 +8,7 @@ public class PromptBuilderService {
 
     public String buildSystemInstruction(RoleType role) {
         if (role == null) {
-            return "You are DevAssist, a helpful developer assistant.";
+            return "You are DevAssist, a helpful developer assistant for code .";
         }
 
         return switch (role) {

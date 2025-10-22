@@ -45,9 +45,9 @@ public class DocumentLoaderService {
         try {
             documents.addAll(loadJavaFiles());
             documents.addAll(loadConfigFiles());
-            documents.addAll(loadBuildFiles());
-            documents.addAll(loadDocumentationFiles());
-            documents.addAll(loadSqlFiles());
+//            documents.addAll(loadBuildFiles());
+           // documents.addAll(loadDocumentationFiles());
+           // documents.addAll(loadSqlFiles());
 
             log.info("✅ Loaded {} code chunks from {} project files",
                     documents.size(),
@@ -108,6 +108,7 @@ public class DocumentLoaderService {
 
         if (!imports.isEmpty()) {
             String importsBlock = imports.stream().map(Object::toString).collect(Collectors.joining("\n"));
+
             results.add(CodeDocument.builder()
                     .id(UUID.randomUUID().toString())
                     .filePath(relativePath)
@@ -173,7 +174,7 @@ public class DocumentLoaderService {
                     methodRoles.add("response");
 
                 // merge tech tags too
-                Set<String> methodTags = new HashSet<>(techTags);
+                Set<String> methodTags = new HashSet<>();
                 methodTags.addAll(methodRoles);
 
                 results.add(CodeDocument.builder()
@@ -234,8 +235,6 @@ public class DocumentLoaderService {
         String allText = (content + " " + className + " " + String.join(" ", imports)).toLowerCase();
 
         Map<String, List<String>> techKeywords = Map.ofEntries(
-                Map.entry("spring", List.of("springframework", "springboot")),
-                Map.entry("spring-boot", List.of("springboot")),
                 Map.entry("redis", List.of("redis", "lettuce", "jedis")),
                 Map.entry("jpa", List.of("jakarta.persistence", "javax.persistence", "jpa")),
                 Map.entry("hibernate", List.of("hibernate")),
@@ -276,7 +275,7 @@ public class DocumentLoaderService {
     }
 
     private List<CodeDocument> loadDocumentationFiles() {
-        return loadSimpleFiles("", List.of(".md", "README"));
+        return loadSimpleFiles("", List.of( "README"));
     }
 
     private List<CodeDocument> loadSqlFiles() {
