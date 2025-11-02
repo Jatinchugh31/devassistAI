@@ -22,6 +22,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class AiConfig {
@@ -34,6 +35,7 @@ public class AiConfig {
     @Bean
     @ConditionalOnProperty(name = "devassist.rag.enabled", havingValue = "true")
     @ConditionalOnProperty(name = "devassist.rag.approach.type", havingValue = "QUESTION_ANSWER_ADVISOR")
+    @Primary
     public ChatClient chatClientWithRag(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor,
                                         SqlTool sqlTool, FileSystemTool fileSystemTool, HttpTool httpTool,
                                         VectorStore vectorStore) {
@@ -61,6 +63,7 @@ public class AiConfig {
     @Bean
     @ConditionalOnProperty(name = "devassist.rag.enabled", havingValue = "true")
     @ConditionalOnProperty(name = "devassist.rag.approach.type", havingValue = "VECTOR_STORE_DOCUMENT_RETRIEVER")
+    @Primary
     public ChatClient chatClientWithRagWithRetrieval(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor,
                                                      SqlTool sqlTool, FileSystemTool fileSystemTool, HttpTool httpTool,
                                                      VectorStore vectorStore) {
@@ -113,6 +116,7 @@ public class AiConfig {
 
     @Bean
     @ConditionalOnProperty(name = "devassist.rag.enabled", havingValue = "false", matchIfMissing = false)
+    @Primary
     public ChatClient chatClientWithoutRag(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor,
                                            SqlTool sqlTool, FileSystemTool fileSystemTool, HttpTool httpTool) {
         // Build a ChatClient with Tools + Memory (no RAG):
@@ -127,4 +131,95 @@ public class AiConfig {
                 .defaultTools(sqlTool, fileSystemTool, httpTool)  // Register all tools
                 .build();
     }
+
+    /**
+     * ChatClient for Agentic operations - WITHOUT tools, WITH RAG (if enabled)
+     * Used for planning, reasoning, reflection, and synthesis phases
+     * RAG provides codebase context for better planning and reasoning
+     */
+    @Bean(name = "agenticChatClient")
+    @ConditionalOnProperty(name = "devassist.rag.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "devassist.rag.approach.type", havingValue = "QUESTION_ANSWER_ADVISOR")
+    public ChatClient agenticChatClientWithRag(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor,
+                                               VectorStore vectorStore) {
+        // Build a ChatClient WITH RAG but WITHOUT tools for agentic operations
+        // RAG provides codebase context for better planning and reasoning
+        QuestionAnswerAdvisor questionAnswerAdvisor = QuestionAnswerAdvisor
+                .builder(vectorStore)
+                .searchRequest(SearchRequest.builder().topK(50).similarityThreshold(0.6).build())
+                .build();
+        return ChatClient.builder(chatModel)
+                .defaultAdvisors(
+                        logAdvisor,  // Executes first (order=0)
+                        questionAnswerAdvisor,  // RAG context (order=5) - Provides codebase context
+                        PromptChatMemoryAdvisor.builder(chatMemory).build()  // Executes last (order=10)
+                )
+                // NO tools - to avoid conflicts
+                .build();
+    }
+
+    @Bean(name = "agenticChatClient")
+    @ConditionalOnProperty(name = "devassist.rag.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "devassist.rag.approach.type", havingValue = "VECTOR_STORE_DOCUMENT_RETRIEVER")
+    public ChatClient agenticChatClientWithRagRetrieval(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor,
+                                                        VectorStore vectorStore) {
+        // Build a ChatClient WITH RAG (retrieval approach) but WITHOUT tools
+        Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
+                .documentRetriever(VectorStoreDocumentRetriever.builder()
+                        .similarityThreshold(0.65)
+                        .vectorStore(vectorStore)
+                        .topK(50)
+                        .build())
+                .queryAugmenter(ContextualQueryAugmenter.builder()
+                        .promptTemplate(new PromptTemplate("""
+                                Context information is below.
+                                
+                                ---------------------
+                                {context}
+                                ---------------------
+                                
+                                Given the context information and no prior knowledge, answer the query.
+                                
+                                Follow these rules:
+                                
+                                1. If the answer is not in the context, just say that you don't know.
+                                2. Avoid statements like "Based on the context..." or "The provided information...".
+                                3. If Question or query is generic Like some Theory/concept tutorial then you can skip context and Answer
+                                Query: {query}
+                                
+                                Answer:
+                                """))
+                        .allowEmptyContext(true)
+                        .build())
+                .build();
+
+        return ChatClient.builder(chatModel)
+                .defaultAdvisors(
+                        logAdvisor,  // Executes first (order=0)
+                        retrievalAugmentationAdvisor,  // RAG context (order=5) - Provides codebase context
+                        PromptChatMemoryAdvisor.builder(chatMemory).build()  // Executes last (order=10)
+                )
+                // NO tools - to avoid conflicts
+                .build();
+    }
+
+    @Bean(name = "agenticChatClient")
+    @ConditionalOnProperty(name = "devassist.rag.enabled", havingValue = "false", matchIfMissing = true)
+    public ChatClient agenticChatClientWithoutRag(ChatModel chatModel, ChatMemory chatMemory, LogAdvisor logAdvisor) {
+        // Build a ChatClient WITHOUT RAG and WITHOUT tools for agentic operations
+        // Used when RAG is disabled
+        return ChatClient.builder(chatModel)
+                .defaultAdvisors(
+                        logAdvisor,  // Executes first (order=0)
+                        PromptChatMemoryAdvisor.builder(chatMemory).build()  // Executes second (order=10)
+                )
+                // NO tools - to avoid conflicts
+                // NO RAG - RAG is disabled
+                .build();
+    }
+
+    // NOTE: No separate toolExecutorChatClient needed
+    // ToolExecutor uses @Primary ChatClient
+    // Tools are auto-discovered from @Component beans globally
+    // We don't need to register them again - Spring AI handles it!
 }

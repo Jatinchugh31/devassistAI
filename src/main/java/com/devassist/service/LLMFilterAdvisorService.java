@@ -79,17 +79,29 @@ public class LLMFilterAdvisorService {
                 
                 ### ⚙️ Rules for generating the filter:
                 
-                1. Use **Spring AI filter syntax** — not Redis or JSONPath.  
+                1. Use **Spring AI filter syntax** — not raw Redis syntax.  
                    - Valid operators: `==`, `IN`, `AND`, `OR`.  
                    - Example: `tags IN ['spring','redis']`
                 2. Always use **single quotes** for string values.  
                 3. Prefer `IN` instead of multiple `OR`s when matching multiple possible values.  
-                4. Use **lowercase** for all values and fields.  
-                5. Escape special characters (`-`, `.`, `/`, `:`) with **two backslashes** for Redis compatibility.  
-                   - Example: `'spring\\-boot'`, `'build\\.gradle'`
-                6. If the question is **generic or conceptual** (e.g., “Explain Spring Boot” or “What is Kafka?”),  
+                4. **Field names are camelCase - use exact names:** `filePath`, `className`, `methodName`, `codeType`, `roles`, `tags`, `isController`, `isService`, `isRepository`
+                   - ✅ CORRECT: `filePath IN ['application.log']` (camelCase)
+                   - ❌ WRONG: `filepath IN ['application.log']` (lowercase - Redis won't find field!)
+                5. Use **lowercase** for VALUES only (not field names).
+                6. **CRITICAL: Escaping rules - Redis will FAIL if you use backslashes or hyphens incorrectly!**
+                   - **ABSOLUTE RULE: NEVER use backslashes (\\\\) anywhere in filter values - Redis will throw syntax errors!**
+                     - ❌ WRONG: `tags IN ['stack\\-trace','logback\\-spring']` - This causes Redis errors!
+                     - ✅ CORRECT: `tags IN ['stacktrace','logback','logging']` - Use without hyphens or split into separate tags
+                   - **TAG fields** (tags, roles): Avoid hyphens - they cause Redis syntax errors! Split or use alternatives:
+                     - ✅ CORRECT: `tags IN ['logback','logging','spring','boot']` (split `logback-spring` into `logback` and `spring`)
+                     - ✅ CORRECT: `tags IN ['stacktrace','error','exception']` (instead of `stack-trace`)
+                     - ❌ WRONG: `tags IN ['logback-spring']` - Hyphens cause Redis errors!
+                   - **TEXT fields** (filePath): Use literal values - NO escaping, hyphens OK in file paths:
+                     - ✅ CORRECT: `filePath IN ['application.log','logback-spring.xml','src/main/resources']`
+                     - ❌ WRONG: `filePath IN ['application\\.log','logback\\.xml']` - Backslashes cause errors!
+                7. If the question is **generic or conceptual** (e.g., “Explain Spring Boot” or “What is Kafka?”),  
                    return an **empty string** — do not create a filter for it.
-                7. Output **only** the filter expression — no extra text, markdown, or comments.
+                8. Output **only** the filter expression — no extra text, markdown, or comments.
                 
                 ---
                 
@@ -104,6 +116,8 @@ public class LLMFilterAdvisorService {
                 **Example 2:**  
                 Q: Which service handles login?  
                 A: `roles IN ['service'] AND methodName == 'login'`
+                
+                **Note:** Field name is `methodName` (camelCase), not `methodname` (lowercase)
                 
                 ---
                 
@@ -121,7 +135,9 @@ public class LLMFilterAdvisorService {
                 
                 **Example 5:**  
                 Q: What tools or frameworks does this project use?  
-                A: `tags IN ['tool','tools','framework','frameworks','spring','spring\\-boot','maven','gradle','jpa','hibernate','lombok','mapstruct','swagger','openapi','swagger\\-ui','flyway','liquibase','docker','kubernetes','redis','postgresql','mysql','kafka','rabbitmq','elasticsearch','prometheus','grafana','git','github','github\\-actions','jenkins','ci']`
+                A: `tags IN ['tool','tools','framework','frameworks','spring','boot','maven','gradle','jpa','hibernate','lombok','mapstruct','swagger','openapi','ui','flyway','liquibase','docker','kubernetes','redis','postgresql','mysql','kafka','rabbitmq','elasticsearch','prometheus','grafana','git','github','actions','jenkins','ci']`
+                
+                **Note:** Split hyphenated tags: `spring-boot` → `spring` and `boot`, `swagger-ui` → `swagger` and `ui`. NO hyphens in tag values!
                 
                 ---
                 
@@ -133,19 +149,32 @@ public class LLMFilterAdvisorService {
                 
                 **Example 7:**  
                 Q: Where can I find the build configuration?  
-                A: `filePath IN ['build\\.gradle','settings\\.gradle','pom\\.xml']`
+                A: `filePath IN ['build.gradle','settings.gradle','pom.xml']`
+                
+                **Note:** Field name must be `filePath` (camelCase), not `filepath`!
                 
                 ---
                 
                 **Example 8:**  
                 Q: Where are application properties defined?  
-                A: `filePath IN ['application\\.properties','application\\.yml','application\\.yaml']`
+                A: `filePath IN ['application.properties','application.yml','application.yaml']`
+                
+                ---
+                
+                **Example 12:**  
+                Q: Find logging configuration files  
+                A: `filePath IN ['logback.xml','logback-spring.xml','log4j2.xml','application.log'] OR tags IN ['logging','logback','spring','log4j2']`
+                
+                **Note:** 
+                - filePath: Hyphens OK (it's a TEXT field): `logback-spring.xml` ✅
+                - tags: NO hyphens - split `logback-spring` into `logback` and `spring` ✅
+                - NEVER use backslashes: `stack\\-trace` ❌ → use `stacktrace` ✅
                 
                 ---
                 
                 **Example 9:**  
                 Q: Which files define dependencies or plugins?  
-                A: `filePath IN ['pom\\.xml','build\\.gradle'] OR tags IN ['dependency','plugin','maven','gradle']`
+                A: `filePath IN ['pom.xml','build.gradle'] OR tags IN ['dependency','plugin','maven','gradle']`
                 
                 ---
                 
@@ -164,7 +193,14 @@ public class LLMFilterAdvisorService {
                 ### 🧾 Output Format
                 - Return **only** the filter expression.  
                 - Example output:  
-                  `filePath IN ['build\\.gradle','pom\\.xml'] OR tags IN ['config','build']`
+                  `filePath IN ['build.gradle','pom.xml'] OR tags IN ['config','build']`
+                
+                **CRITICAL REMINDERS:**
+                1. Field names MUST be camelCase: `filePath`, `className`, `methodName`, `roles`, `tags` (NOT lowercase!)
+                2. NEVER use backslashes (\\\\) - Redis will throw syntax errors!
+                3. For TAG fields: Split hyphenated terms (e.g., `logback-spring` → `logback` and `spring`)
+                4. For filePath: Hyphens are OK, but NO backslashes ever!
+                5. Test your filter - if it has `\\` anywhere, it's WRONG!
                 """;
 
 
